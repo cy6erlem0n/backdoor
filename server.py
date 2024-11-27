@@ -74,8 +74,8 @@ def shell(target, ip):
         except Exception as e:
             logging.error(f"Ошибка выполнения команды: {e}")
             break
-        finally:
-            target.close()
+    target.close()
+    
 #подключение и прослушивание
 def server():
     try:
