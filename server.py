@@ -128,9 +128,9 @@ def server():
             s.bind(("192.168.178.67", 54321))
             s.listen(1)
             logging.info("[+] Ожидание подключения...")
-        target, ip = s.accept()
-        logging.info(f"[+] Подключение установлено с {ip}")
-        shell(target, ip)
+            target, ip = s.accept()
+            logging.info(f"[+] Подключение установлено с {ip}")
+            shell(target, ip)
     except KeyboardInterrupt:
         logging.info("\n[!] Сервер остановлен вручную")
     except Exception as e:
