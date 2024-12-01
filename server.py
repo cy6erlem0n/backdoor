@@ -104,13 +104,16 @@ def shell(target, ip):
                 print(response)
         except Exception as e:
             logging.error(f"Ошибка выполнения команды: {e}")
-            break
+        finally:
+            target.close()
+            logging.info("[+] Клиент отключен")
 
 
 def server():
     def signal_handler(sig, frame):
         logging.info("\n[!] Сервер остановлен вручную")
         sys.exit(0)
+
     signal.signal(signal.SIGINT, signal_handler)
     while True:
         try:
