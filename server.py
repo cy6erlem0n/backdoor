@@ -21,6 +21,7 @@ def reliable_recv(target):
         except ValueError:
             continue
 
+
 def show_help():
     help_text = """
     Список доступных команд:
@@ -38,12 +39,13 @@ def show_help():
 
     print(help_text)
 
+
 def download_file(command, target):
     file_name = command[9:].strip()
     try:
         with open(file_name, "wb") as file:
             file_data = reliable_recv(target)
-            if file_data.startswith("!!"):
+            if isinstance(file_data, str) and file_data.startswith("!!"):
                 logging.error(file_data)
             else:
                 file.write(base64.b64decode(file_data))

