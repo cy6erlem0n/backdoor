@@ -85,8 +85,10 @@ def shell(target, ip):
                 command = input(f"*Shell#~{ip}: ")
                 reliable_send(command, target)
                 if command == "q":
+                    logging.info("[+] Завершаем сеанс...")
+                    reliable_send("q", target)
                     target.close()
-                    logging.info("[+] Сервер и клиент закрыты.")
+                    break
                 elif command == "help":
                     show_help()
                 elif command.startswith("cd"):
