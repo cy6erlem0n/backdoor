@@ -41,14 +41,13 @@ def show_help():
 def download_file(command, target):
     file_name = command[9:].strip()
     try:
-        file_data = reliable_recv(target)
-        if file_data.startswith("!!"):
-            logging.error(file_data)
-            return
         with open(file_name, "wb") as file:
             file_data = reliable_recv(target)
-            file.write(base64.b64decode(file_data))
-        logging.info(f"Файл {file_name} успешно загружен")
+            if file_data.startswith("!!"):
+                logging.error(file_data)
+            else:
+                file.write(base64.b64decode(file_data))
+                logging.info(f"Файл {file_name} успешно загружен")
     except Exception as e:
         logging.error(f"Ошибка загрузки файла {file_name}: {e}")
 
