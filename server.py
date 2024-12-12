@@ -100,15 +100,16 @@ def shell(target, ip):
     try:
         while True:
             command = input(f"*Shell#~{ip}: ")
-            reliable_send(command, target)
+            if command == "help":
+                show_help()
+                continue
+            else:
+                reliable_send(command, target)
             if command == "q":
                 logging.info("[+] Завершаем сеанс...")
                 reliable_send("q", target)
                 target.close()
                 break
-            elif command == "help":
-                show_help()
-                continue
             elif command.startswith("cd"):
                 response = reliable_recv(target)
                 print(response)
