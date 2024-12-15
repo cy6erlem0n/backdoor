@@ -3,8 +3,6 @@ import socket
 import json
 import base64
 import logging
-import signal
-import sys
 import datetime
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -137,13 +135,7 @@ def shell(target, ip):
         logging.info("[+] Клиент отключен")
 
 
-# def signal_handler(sig, frame):
-#     logging.info("\n[!] Сервер остановлен вручную")
-#     sys.exit(0)
-
-
 def server():
-    #signal.signal(signal.SIGINT, signal_handler)
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

