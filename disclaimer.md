@@ -1,4 +1,18 @@
-# Disclaimer
-# This software is created for educational purposes only. It is intended to demonstrate concepts of networking, file handling, and system interaction. I, as the developer, do not condone or support any illegal use of this tool.
-#
-# You are solely responsible for how you use this code. Any misuse, unauthorized deployment, or malicious activity involving this tool is strictly prohibited and the responsibility lies entirely with the user.
+# 📜 Disclaimer
+
+This software is provided for **educational and ethical penetration testing** purposes only.
+
+It is intended to demonstrate key cybersecurity concepts such as:
+- Networking
+- Remote shell communication
+- File and input handling
+- Keystroke monitoring
+
+---
+
+**❗ Illegal or malicious use of this tool is strictly forbidden.**
+
+By using this software, you agree that:
+- You are solely responsible for any actions taken with the code  
+- The author does **not condone** or **support** unethical use  
+- The author assumes **no liability** for damages or legal consequences resulting from misuse
